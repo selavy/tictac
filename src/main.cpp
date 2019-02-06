@@ -1,53 +1,19 @@
-#include <stdio.h>
 #include <assert.h>
+#include <readline/history.h>
+#include <readline/readline.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
+#include <climits>
+#include <iostream>
+#include <string>
+#include "tictac.h"
 
-struct Board
-{
-    uint16_t xs : 9;
-    uint16_t os : 9;
-    uint16_t xtm : 1;
-};
-typedef struct Board Board;
-static_assert(sizeof(Board) <= sizeof(uint32_t), "");
-
-Board MkBoard()
-{
-    Board b;
-    b.xs = b.os = 0;
-    b.xtm = 1;
-    return b;
-}
-
-#define MASK(x) (1u << x)
-uint16_t mask(int pos) { return 1u << pos; }
-int isset(uint16_t b, int pos) { return (b & mask(pos)) != 0; }
-uint16_t set(uint16_t b, int pos) { return b | mask(pos); }
-
-void CheckBoard(Board b)
-{
-    for (int i = 0; i < 9; ++i)
-        assert(set(b.xs, i) && set(b.os, i));
-}
-
-void PrintBoard(Board b)
-{
-    int i;
-    char c;
-    CheckBoard(b);
-    for (int y = 0; y < 3; ++y)
-    {
-        for (int x = 0; x < 3; ++x)
-        {
-            i = 3*y + x;
-            // ass
-            if (isset(b.xs, i))
-                c = 'X';
-            else if (isset(b.os, i))
-                c = 'O';
-            else
-                c = ' ';
+void print(Board b) {
+    for (int y = 0; y < 3; ++y) {
+        for (int x = 0; x < 3; ++x) {
+            int i = 3 * y + x;
+            char c = b.xplayed(i) ? 'X' : b.oplayed(i) ? 'O' : /*' '*/ i + '1';
             if (x != 2)
                 printf(" %c |", c);
             else if (y != 2)
@@ -56,99 +22,119 @@ void PrintBoard(Board b)
                 printf(" %c\n", c);
         }
     }
+    // printf("%c to move\n", b.xtm() ? 'X' : 'O');
 }
 
-#define ARRAY_SIZE(x) sizeof(x) / sizeof((x)[0])
-
-enum {
-    GAMEON,
-    XWIN,
-    OWIN,
-    CATS,
-};
-
-// 0 | 1 | 2
-// ---------
-// 3 | 4 | 5
-// ---------
-// 6 | 7 | 8
-static const uint16_t WinMasks[8] = {
-    MASK(0) | MASK(1) | MASK(2), // top horiz
-    MASK(3) | MASK(4) | MASK(5), // middle horiz
-    MASK(6) | MASK(7) | MASK(8), // bottom horiz
-    MASK(0) | MASK(3) | MASK(6), // left vert
-    MASK(1) | MASK(4) | MASK(7), // middle vert
-    MASK(2) | MASK(5) | MASK(8), // right vert
-    MASK(0) | MASK(4) | MASK(8), // left top -> bottom right diag
-    MASK(6) | MASK(4) | MASK(2), // left bottom -> top right diag
-};
-static const uint16_t CatsGameMask = MASK(0) | MASK(1) | MASK(2) | MASK(3) | MASK(4) | MASK(5) | MASK(6) | MASK(7) | MASK(8) | MASK(9);
-
-int IsWin(Board b)
-{
-    uint16_t xs = b.xs;
-    uint16_t os = b.os;
-    uint16_t m;
-    for (int i = 0; i < ARRAY_SIZE(WinMasks); ++i)
-    {
-        m = WinMasks[i];
-        if ((xs & m) == m)
-            return XWIN;
-        else if ((os & m) == m)
-            return OWIN;
+int negamax(Board board, int color, int depth) {
+    if (board.xwin())
+        return color*100*depth;
+    else if (board.owin())
+        return color*-100*depth;
+    else if (board.tie())
+        return 0;
+    int value = INT_MIN;
+    Moves moves = board.genmoves();
+    assert(moves.length() != 0);
+    for (int i = 0; i < moves.length(); ++i) {
+        board.make_move(moves[i]);
+        value = std::max(value, -negamax(board, -color, depth - 1));
+        board.undo_move(moves[i]);
     }
-    if (((xs | os) & CatsGameMask) == CatsGameMask)
-        return CATS;
-    else
-        return GAMEON;
+    assert(value != INT_MIN);
+    return value;
 }
 
-// TODO: size this
-static Board gStack[4096];
-static size_t gStackP = 0;
-
-void GenerateMoves(Board b)
-{
-    uint16_t mask = b.xtm ? b.xs : b.os;
-    uint16_t comb = b.xs | b.os;
-    Board *stk;
-    // TODO: check that compiler is hoisting the if check out
-    // TODO: this loop could be the lsb on ~comb instead
-    for (int i = 0; i < 9; ++i)
-    {
-        if (isset(comb, i))
-            continue;
-        stk = &gStack[gStackP++];
-        *stk = b;
-        if (b.xtm)
-            stk->xs = set(mask, i);
-        else
-            stk->os = set(mask, i);
+int search(Board board) {
+    int mult = board.xtm() ? -1 : 1;
+    int bestscore = INT_MIN;
+    int bestmove = -1;
+    Moves moves = board.genmoves();
+    for (int i = 0; i < moves.length(); ++i) {
+        int move = moves[i];
+        board.make_move(move);
+        int score = -1*negamax(board, mult, 9);
+        board.undo_move(move);
+        if (score > bestscore) {
+            bestscore = score;
+            bestmove = move;
+        }
     }
+    assert(bestmove != -1);
+    return bestmove;
 }
 
-int main(int argc, char** argv)
-{
-    memset(&gStack, 0, sizeof(gStack));
-    gStackP = 0;
+int get_move(Board board) {
+    int x = -1;
+    char* input;
+    do {
+        if ((input = readline("Move? (1-9) ")) == NULL) {
+            exit(0);
+        }
+        if ('1' <= input[0] && input[0] <= '9') {
+            x = input[0] - '1';
+            if (!board.is_available(x))
+                x = -1;
+        }
+        free(input);
+    } while (!(0 <= x && x <= 8));
+    printf("\n");
+    return x;
+}
 
-    Board b = MkBoard();
-    b.xs = set(b.xs, 4);
-    b.xtm = 0;
-    GenerateMoves(b);
-    for (int i = 0; i < gStackP; ++i)
-    {
-        PrintBoard(gStack[i]);
-        printf("\n");
+bool check_win(Board board) {
+    if (board.xwin()) {
+        print(board);
+        std::cout << "\nX's win!\n";
+        return true;
+    } else if (board.owin()) {
+        print(board);
+        std::cout << "\nO's win!\n";
+        return true;
+    } else if (board.tie()) {
+        print(board);
+        std::cout << "\nCat's game!\n";
+        return true;
     }
-    // b.xs = set(b.xs, 8);
-    // b.xs = set(b.xs, 7);
-    // b.xs = set(b.xs, 4);
-    // b.xs = set(b.xs, 3);
+    return false;
+}
 
-    // b.os = set(b.os, 0);
-    // b.os = set(b.os, 5);
-    // b.os = set(b.os, 2);
-    // PrintBoard(b);
+int main(int argc, char** argv) {
+    // max possible states is bounded by 9! = 362880, likely can reduce
+    // this upper bound because many states end early from a win.
+    // static Board stk[1 << 19];
+
+    bool human_is_x = true;
+    bool okay = false;
+    do {
+        char* input = readline("Play X's? [Y/n] ");
+        if (!input) {
+            exit(0);
+        }
+        else if (input[0] == '\0' || input[0] == 'Y' || input[0] == 'y') {
+            human_is_x = true;
+            okay = true;
+        }
+        else if (input[0] == 'N' || input[0] == 'n') {
+            human_is_x = false;
+            okay = true;
+        }
+        free(input);
+    } while (!okay);
+    printf("\n\n");
+
+    Board board;
+    int move;
+    for (;;) {
+        if (check_win(board)) break;
+        if (board.xtm() == human_is_x) {
+            print(board);
+            printf("\n");
+            move = get_move(board);
+        } else {
+            move = search(board);
+        }
+        board.make_move(move);
+    }
+
     return 0;
 }
