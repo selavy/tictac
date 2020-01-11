@@ -87,7 +87,8 @@ public:
         ++_index;
         return *this;
     }
-    friend bool operator!=(ConstIterator lhs, ConstIterator rhs) noexcept {
+    friend constexpr bool operator!=(ConstIterator lhs,
+                                     ConstIterator rhs) noexcept {
         return lhs._index != rhs._index;
     }
 };
@@ -108,11 +109,6 @@ enum class Side {
 constexpr uint16_t _mask(int x) noexcept { return 1u << x; }
 
 class Board {
-    // 0 | 1 | 2
-    // ---------
-    // 3 | 4 | 5
-    // ---------
-    // 6 | 7 | 8
     static constexpr std::array<uint16_t, 8> WinMasks = {
         _mask(0) | _mask(1) | _mask(2), // top horiz
         _mask(3) | _mask(4) | _mask(5), // middle horiz
@@ -131,9 +127,8 @@ class Board {
 public:
     static constexpr Board make(Moves moves) noexcept {
         Board board;
-        int length = moves.length();
-        for (int i = 0; i < length; ++i) {
-            board.make_move(moves[i]);
+        for (auto move : moves) {
+            board.make_move(move);
         }
         return board;
     }

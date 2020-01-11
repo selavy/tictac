@@ -52,7 +52,6 @@ int search(Board board) {
         int move = moves[i];
         board.make_move(move);
         int score = -negamax(board, mult, 9);
-        printf("%d -> %d\n", move + 1, score);
         board.undo_move(move);
         if (score > bestscore) {
             bestscore = score;
