@@ -1,15 +1,13 @@
+#include "tictac.h"
 #include <catch2/catch.hpp>
 #include <vector>
-#include "tictac.h"
 
 TEST_CASE("Move List") {
     Moves moves;
     REQUIRE(moves.length() == 0);
-    REQUIRE(moves.isempty() == true);
 
     moves.append(4);
     REQUIRE(moves.length() == 1);
-    REQUIRE(moves.isempty() == false);
     REQUIRE(moves[0] == 4);
 
     moves.append(3);
@@ -23,7 +21,6 @@ TEST_CASE("Move List") {
 
     moves.pop();
     REQUIRE(moves.length() == 0);
-    REQUIRE(moves.isempty());
 
     std::vector<int> vs = {3, 7, 8, 1, 2, 4, 0, 5, 6};
     for (int i = 0; i < (int)vs.size(); ++i) {
@@ -87,64 +84,63 @@ TEST_CASE("Board") {
     REQUIRE(board.oplayed(0) == false);
 }
 
-TEST_CASE("Detect wins")
-{
+TEST_CASE("Detect wins") {
     // 0 | 1 | 2
     // ---------
     // 3 | 4 | 5
     // ---------
     // 6 | 7 | 8
     SECTION("X - Top row") {
-        Moves moves = Moves::make({ 0, 3, 1, 4, 2 });
+        Moves moves = Moves::make({0, 3, 1, 4, 2});
         Board board = Board::make(moves);
         REQUIRE(board.xwin());
         REQUIRE(!board.owin());
     }
 
     SECTION("X - Middle row") {
-        Moves moves = Moves::make({ 3, 0, 4, 1, 5 });
+        Moves moves = Moves::make({3, 0, 4, 1, 5});
         Board board = Board::make(moves);
         REQUIRE(board.xwin());
         REQUIRE(!board.owin());
     }
 
     SECTION("X - Bottom row") {
-        Moves moves = Moves::make({ 6, 0, 7, 1, 8 });
+        Moves moves = Moves::make({6, 0, 7, 1, 8});
         Board board = Board::make(moves);
         REQUIRE(board.xwin());
         REQUIRE(!board.owin());
     }
 
     SECTION("X - Left column") {
-        Moves moves = Moves::make({ 0, 1, 3, 2, 6 });
+        Moves moves = Moves::make({0, 1, 3, 2, 6});
         Board board = Board::make(moves);
         REQUIRE(board.xwin());
         REQUIRE(!board.owin());
     }
 
     SECTION("X - Middle column") {
-        Moves moves = Moves::make({ 1, 3, 4, 2, 7 });
+        Moves moves = Moves::make({1, 3, 4, 2, 7});
         Board board = Board::make(moves);
         REQUIRE(board.xwin());
         REQUIRE(!board.owin());
     }
 
     SECTION("X - Right column") {
-        Moves moves = Moves::make({ 2, 3, 5, 1, 8 });
+        Moves moves = Moves::make({2, 3, 5, 1, 8});
         Board board = Board::make(moves);
         REQUIRE(board.xwin());
         REQUIRE(!board.owin());
     }
 
     SECTION("X - Top Left to Bottom Right diagonal") {
-        Moves moves = Moves::make({ 0, 3, 4, 1, 8 });
+        Moves moves = Moves::make({0, 3, 4, 1, 8});
         Board board = Board::make(moves);
         REQUIRE(board.xwin());
         REQUIRE(!board.owin());
     }
 
     SECTION("X - Bottom Right to Top Left diagonal") {
-        Moves moves = Moves::make({ 6, 3, 4, 1, 2 });
+        Moves moves = Moves::make({6, 3, 4, 1, 2});
         Board board = Board::make(moves);
         REQUIRE(board.xwin());
         REQUIRE(!board.owin());
@@ -153,56 +149,56 @@ TEST_CASE("Detect wins")
     // ----
 
     SECTION("O - Top row") {
-        Moves moves = Moves::make({ 8, 0, 3, 1, 4, 2 });
+        Moves moves = Moves::make({8, 0, 3, 1, 4, 2});
         Board board = Board::make(moves);
         REQUIRE(!board.xwin());
         REQUIRE(board.owin());
     }
 
     SECTION("O - Middle row") {
-        Moves moves = Moves::make({ 8, 3, 0, 4, 1, 5 });
+        Moves moves = Moves::make({8, 3, 0, 4, 1, 5});
         Board board = Board::make(moves);
         REQUIRE(!board.xwin());
         REQUIRE(board.owin());
     }
 
     SECTION("O - Bottom row") {
-        Moves moves = Moves::make({ 3, 6, 0, 7, 1, 8 });
+        Moves moves = Moves::make({3, 6, 0, 7, 1, 8});
         Board board = Board::make(moves);
         REQUIRE(!board.xwin());
         REQUIRE(board.owin());
     }
 
     SECTION("O - Left column") {
-        Moves moves = Moves::make({ 5, 0, 1, 3, 2, 6 });
+        Moves moves = Moves::make({5, 0, 1, 3, 2, 6});
         Board board = Board::make(moves);
         REQUIRE(!board.xwin());
         REQUIRE(board.owin());
     }
 
     SECTION("O - Middle column") {
-        Moves moves = Moves::make({ 0, 1, 3, 4, 2, 7 });
+        Moves moves = Moves::make({0, 1, 3, 4, 2, 7});
         Board board = Board::make(moves);
         REQUIRE(!board.xwin());
         REQUIRE(board.owin());
     }
 
     SECTION("O - Right column") {
-        Moves moves = Moves::make({ 4, 2, 3, 5, 1, 8 });
+        Moves moves = Moves::make({4, 2, 3, 5, 1, 8});
         Board board = Board::make(moves);
         REQUIRE(!board.xwin());
         REQUIRE(board.owin());
     }
 
     SECTION("O - Top Left to Bottom Right diagonal") {
-        Moves moves = Moves::make({ 5, 0, 3, 4, 1, 8 });
+        Moves moves = Moves::make({5, 0, 3, 4, 1, 8});
         Board board = Board::make(moves);
         REQUIRE(!board.xwin());
         REQUIRE(board.owin());
     }
 
     SECTION("O - Bottom Right to Top Left diagonal") {
-        Moves moves = Moves::make({ 0, 6, 3, 4, 1, 2 });
+        Moves moves = Moves::make({0, 6, 3, 4, 1, 2});
         Board board = Board::make(moves);
         REQUIRE(!board.xwin());
         REQUIRE(board.owin());
