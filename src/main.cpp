@@ -22,14 +22,13 @@ void print(Board b) {
                 printf(" %c\n", c);
         }
     }
-    // printf("%c to move\n", b.xtm() ? 'X' : 'O');
 }
 
 int negamax(Board board, int color, int depth) {
     if (board.xwin())
-        return color*100*depth;
+        return color * 100 * depth;
     else if (board.owin())
-        return color*-100*depth;
+        return color * -100 * depth;
     else if (board.tie())
         return 0;
     int value = INT_MIN;
@@ -52,7 +51,7 @@ int search(Board board) {
     for (int i = 0; i < moves.length(); ++i) {
         int move = moves[i];
         board.make_move(move);
-        int score = -1*negamax(board, mult, 9);
+        int score = -1 * negamax(board, mult, 9);
         board.undo_move(move);
         if (score > bestscore) {
             bestscore = score;
@@ -72,8 +71,7 @@ int get_move(Board board) {
         }
         if ('1' <= input[0] && input[0] <= '9') {
             x = input[0] - '1';
-            if (!board.is_available(x))
-                x = -1;
+            if (!board.is_available(x)) x = -1;
         }
         free(input);
     } while (!(0 <= x && x <= 8));
@@ -109,12 +107,10 @@ int main(int argc, char** argv) {
         char* input = readline("Play X's? [Y/n] ");
         if (!input) {
             exit(0);
-        }
-        else if (input[0] == '\0' || input[0] == 'Y' || input[0] == 'y') {
+        } else if (input[0] == '\0' || input[0] == 'Y' || input[0] == 'y') {
             human_is_x = true;
             okay = true;
-        }
-        else if (input[0] == 'N' || input[0] == 'n') {
+        } else if (input[0] == 'N' || input[0] == 'n') {
             human_is_x = false;
             okay = true;
         }
